@@ -1,0 +1,35 @@
+struct __anonstruct___data_7.__mutex -> struct __anonstruct___data_7.__mutex: { $out = $in; }
+
+causes error ->
+stats.c/prefix_stats -> stats.c/prefix_stats,
+
+settings -> settings, 
+memcached.c/listen_conn -> memcached.c/listen_conn,
+memcached.c/buckets -> memcached.c/buckets,
+memcached.c/clockevent -> memcached.c/clockevent,
+memcached.c/deleteevent -> memcached.c/deleteevent,
+memcached.c/updateevent -> memcached.c/updateevent,
+main#pw -> main#pw,
+main#pid_file -> main#pid_file,
+main#username -> main#username,
+thread.c/cqi_freelist_lock -> thread.c/cqi_freelist_lock,
+thread.c/cqi_freelist -> thread.c/cqi_freelist,
+thread.c/threads -> thread.c/threads,
+
+struct _LIBEVENT_THREAD -> struct _LIBEVENT_THREAD: {
+  memcpy(&$out, &$in, sizeof($out));
+
+  void (*notify_callback)(int, short, void *) =
+    kitsune_lookup_key_new("thread_libevent_process");
+  event_del((struct event *)&$out.notify_event);        
+  event_set((struct event *)&$out.notify_event, $out.notify_receive_fd, EV_READ | EV_PERSIST, notify_callback, &$out);
+  event_base_set((struct event_base *)$out.base, (struct event *)&$out.notify_event);
+  event_add((struct event *)&$out.notify_event, 0);
+
+  void (*dsu_callback)(int, short, void *) =
+    kitsune_lookup_key_new("thread_dsu_process");
+  event_del((struct event *)&$out.dsu_event);        
+  event_set((struct event *)&$out.dsu_event, $out.dsu_receive_fd, EV_READ | EV_PERSIST, dsu_callback, &$out);
+  event_base_set((struct event_base *)$out.base, (struct event *)&$out.dsu_event);
+  event_add((struct event *)&$out.dsu_event, 0);
+}

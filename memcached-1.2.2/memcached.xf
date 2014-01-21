@@ -1,0 +1,10 @@
+struct iovec -> struct iovec,
+struct msghdr -> struct msghdr,
+typedef pthread_mutex_t -> typedef pthread_mutex_t,
+typedef pthread_cond_t -> typedef pthread_cond_t,
+struct event -> struct event,
+thread.c/threads -> thread.c/threads,
+memcached.c/freeconns -> memcached.c/freeconns: {
+  assert(sizeof($in) == sizeof($out));
+  memcpy(&$out, &$in, sizeof($out));
+}

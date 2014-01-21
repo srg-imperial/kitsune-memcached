@@ -1,0 +1,31 @@
+struct iovec -> struct iovec,
+struct msghdr -> struct msghdr,
+typedef pthread_mutex_t -> typedef pthread_mutex_t,
+typedef pthread_cond_t -> typedef pthread_cond_t,
+struct event -> struct event,
+thread.c/threads -> thread.c/threads,
+memcached.c/freeconns -> memcached.c/freeconns: { 
+  assert(sizeof($in) == sizeof($out));
+  memcpy(&$out, &$in, sizeof($out));
+}
+
+assoc.c/expand_bucket -> assoc.c/expand_bucket,
+assoc.c/hash_items -> assoc.c/hash_items,
+assoc.c/hashpower -> assoc.c/hashpower: { $out = (unsigned int)$in; }
+
+assoc.c/expanding -> assoc.c/expanding: { $out = ($newtype(bool))$in; }
+
+INIT items.c/get_cas_id#cas_id: {/* use default init*/}
+INIT memcached.c/freesuffix: {
+  $out = (char **)malloc( sizeof(char *) * 500 );
+}
+INIT memcached.c/freesuffixtotal: { $out = 500; }
+INIT memcached.c/freesuffixcurr: { $out = 0; }
+
+INIT thread.c/suffix_lock: {/* use default init */}
+
+INIT struct settings.access: { $out = 0700; }
+INIT struct _conn.suffixlist: { $out = NULL; }
+INIT struct _conn.suffixsize: { $out = 20; }
+INIT struct _conn.suffixcurr: { $out = NULL; }
+INIT struct _conn.suffixleft: { $out = 0; }
