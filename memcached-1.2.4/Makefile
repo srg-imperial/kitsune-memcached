@@ -12,9 +12,10 @@ KITSUNE_INCLUDE =
 KITSUNE_LIB =
 KITSUNE_BIN =
 endif
+GLIBC225INC = inc
 EKLIB  = $(KITSUNE_LIB) -lkitsune-threads
 CFLAGS_SHARED = -Wall -ldl -shared -fPIC -u kitsune_init_inplace $(KITSUNE_INCLUDE)
-CFLAGS = -Wall -O2 -fvisibility=hidden -ldl -fPIC $(KITSUNE_INCLUDE) $(EKLIB)
+CFLAGS = -O2 -Wall -ggdb -fvisibility=hidden -ldl -fPIC  -I $(GLIBC225INC) $(EKLIB)  $(KITSUNE_INCLUDE)
 EKDRV = $(KITSUNE_BIN)driver
 EKCC = $(KITSUNE_BIN)ktcc --dostackvars  --doglobalreg --automigrate --keepunused -include ktthreads.h
 EKJOIN = $(KITSUNE_BIN)kttjoin
@@ -34,9 +35,19 @@ CFLAGS += -DHAVE_CONFIG_H -include $(CONFIG_HEADER) -D_GNU_SOURCE
 
 SRCS = assoc.c  daemon.c  items.c  memcached.c  slabs.c  stats.c  thread.c
 
-all: $(APP).so
+all: glibc255-headers $(APP).so
 
-OBJS = $(patsubst %.c,%.o,$(SRCS))
+OBJS = $(patsubst %.c,%.o,$(SRCS)) glibc225.o
+
+glibc225.o: ../glibc-2.25/glibc225.c
+	$(EKCC) $(CFLAGS) $(IFLAGS) -c $< --doktsavetypes --typesfile-out=$*.ktt
+
+$(GLIBC225INC)/bits/sysmacros.h:
+	mkdir -p $(GLIBC225INC)/bits
+	cp /usr/include/bits/sysmacros.h $(GLIBC225INC)/bits/sysmacros.h
+	patch -p1 < ../sysmacros.h.patch
+
+glibc255-headers: $(GLIBC225INC)/bits/sysmacros.h
 
 .c.o:
 	$(EKCC) $(CFLAGS) $(IFLAGS) -c $*.c --doktsavetypes --typesfile-out=$*.ktt
@@ -52,4 +63,4 @@ $(APP).so: $(OBJS) $(GENERATED_XFORM)
 	cp $(APP).so $(APP)-2.so 
 
 clean:
-	rm -f *.o *.swp *.so *.cil.c *.cil.i *.i *.ktt dsu.c
+	rm -f *.o *.swp *.so *.cil.c *.cil.i *.i *.ktt dsu.c $(GLIBC225INC)
