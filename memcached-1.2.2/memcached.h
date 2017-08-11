@@ -167,11 +167,11 @@ typedef struct _conn { /**DSU xfgen_ignore */
     int    sbytes;    /* how many bytes to swallow */
 
     /* data for the mwrite state */
-    struct iovec *iov;
+    struct iovec * E_OPAQUE iov;
     int    iovsize;   /* number of elements allocated in iov[] */
     int    iovused;   /* number of elements used in iov[] */
 
-    struct msghdr *msglist;
+    struct msghdr * E_OPAQUE msglist;
     int    msgsize;   /* number of elements allocated in msglist[] */
     int    msgused;   /* number of elements used in msglist[] */
     int    msgcurr;   /* element in msglist[] being transmitted now */
