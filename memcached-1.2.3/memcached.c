@@ -314,6 +314,7 @@ conn *conn_new(const int sfd, const int init_state, const int event_flags,
         c->iov = 0;
         c->msglist = 0;
         c->hdrbuf = 0;
+        memset(&(c->request_addr), 0, sizeof(struct sockaddr));
 
         c->rsize = read_buffer_size;
         c->wsize = DATA_BUFFER_SIZE;
