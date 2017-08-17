@@ -653,6 +653,7 @@ void thread_init(int nthreads, struct event_base *main_base) {
 
         threads[i].dsu_receive_fd = dsu_fds[0];
         threads[i].dsu_send_fd = dsu_fds[1];
+        threads[i].base = NULL;
 
         setup_thread(&threads[i]);
     }
