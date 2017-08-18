@@ -1,5 +1,5 @@
-struct iovec -> struct iovec,
-struct msghdr -> struct msghdr,
+//struct iovec -> struct iovec,
+//struct msghdr -> struct msghdr,
 typedef pthread_mutex_t -> typedef pthread_mutex_t,
 typedef pthread_cond_t -> typedef pthread_cond_t,
 struct event -> struct event,
