@@ -36,7 +36,10 @@ SRCS = assoc.c  daemon.c  items.c  memcached.c  slabs.c  stats.c  thread.c
 
 all: $(APP).so
 
-OBJS = $(patsubst %.c,%.o,$(SRCS))
+OBJS = $(patsubst %.c,%.o,$(SRCS)) glibc223.o
+
+glibc223.o: ../glibc-2.23/glibc223.c
+	$(EKCC) $(CFLAGS) $(IFLAGS) -c $< --doktsavetypes --typesfile-out=$*.ktt
 
 .c.o:
 	$(EKCC) $(CFLAGS) $(IFLAGS) -c $*.c --doktsavetypes --typesfile-out=$*.ktt
