@@ -62,13 +62,13 @@
 #define PACKAGE_NAME "memcached"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "memcached 1.2.3"
+#define PACKAGE_STRING "memcached 1.2.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "memcached"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.3"
+#define PACKAGE_VERSION "1.2.2"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -77,7 +77,7 @@
 #define USE_THREADS
 
 /* Version number of package */
-#define VERSION "1.2.3"
+#define VERSION "1.2.2"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
