@@ -309,9 +309,10 @@ static void *worker_libevent(void *arg) {
         pthread_mutex_unlock(&init_lock);
     }
 
-    kitsune_update("libevent_thread"); /**DSU updatepoint */
-    event_base_loop(me->base, 0);
-    kitsune_update("libevent_thread"); /**DSU updatepoint */
+    while(1) {
+      kitsune_update("libevent_thread"); /**DSU updatepoint */
+      event_base_loop(me->base, 0);
+    }
     return NULL;
 }
 
