@@ -194,6 +194,9 @@ typedef struct _conn { /**DSU xfgen_ignore */
     int    bucket;    /* bucket number for the next command, if running as
                          a managed instance. -1 (_not_ 0) means invalid. */
     int    gen;       /* generation requested for the bucket */
+
+    struct event_base * E_OPAQUE base;
+
 } conn;
 
 /* number of virtual buckets for a managed instance */

@@ -376,6 +376,8 @@ conn *conn_new(const int sfd, const int init_state, const int event_flags,
     c->bucket = -1;
     c->gen = 0;
 
+    c->base = base;
+
     /* EKIDEN */
     NOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
     
@@ -2800,7 +2802,7 @@ int main (int argc, char **argv) E_NOTELOCALS /**DSU data */
             printf("%d -> %d : %d \n", c, &c->event, c->sfd);
             event_del(&c->event);
             event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
-            event_base_set(c->event.ev_base, &c->event);
+            event_base_set(c->base, &c->event);
             event_add(&c->event, NULL);
         }
 
