@@ -2472,7 +2472,9 @@ static void sig_handler(const int sig) {
 }
 
 static struct event updateevent; /**DSU other 4 */
+static int update_requested = 0;
 static void update_sig_handler(const int fd, const short which, void *arg) {
+    update_requested = 1;
     kitsune_signal_update();
     event_base_loopexit(main_base, NULL);
 }
@@ -2816,12 +2818,24 @@ int main (int argc, char **argv) E_NOTELOCALS /**DSU data */
 
     kitsune_update("main"); /**DSU updatepoint */
     /* enter the event loop */
+again:
     event_base_loop(main_base, 0);
     /**DSU other 3 */
 #ifdef USE_THREADS
     notify_threads_update();
 #endif
     kitsune_update("main"); /**DSU updatepoint */
+    if (update_requested) {
+      // Update was requested but we are the leader
+      event_del(&clockevent);
+      event_del(&deleteevent);
+
+      clock_handler(0, 0, 0);
+      delete_handler(0, 0, 0);
+      update_requested = 0;
+
+      goto again;
+    }
     
     
     /* remove the PID file if we're a daemon */
