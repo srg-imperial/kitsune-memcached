@@ -132,7 +132,7 @@ enum conn_states {
 typedef struct _conn { /**DSU xfgen_ignore */
     int    sfd;
     int    state;
-    struct event event;
+    struct event * E_OPAQUE event;
     short  ev_flags;
     short  which;   /* which events were just triggered */
 
