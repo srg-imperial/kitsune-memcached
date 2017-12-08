@@ -47,7 +47,11 @@ $(GLIBC225INC)/bits/sysmacros.h:
 	cp /usr/include/bits/sysmacros.h $(GLIBC225INC)/bits/sysmacros.h
 	patch -p1 < ../sysmacros.h.patch
 
-glibc255-headers: $(GLIBC225INC)/bits/sysmacros.h
+$(GLIBC225INC)/stdlib.h:
+	cp /usr/include/stdlib.h $(GLIBC225INC)/stdlib.h
+	patch -p1 < ../stdlib.h.patch
+
+glibc255-headers: $(GLIBC225INC)/bits/sysmacros.h $(GLIBC225INC)/stdlib.h
 
 .c.o:
 	$(EKCC) $(CFLAGS) $(IFLAGS) -c $*.c --doktsavetypes --typesfile-out=$*.ktt
@@ -63,4 +67,4 @@ $(APP).so: $(OBJS) $(GENERATED_XFORM)
 	cp $(APP).so $(APP)-2.so 
 
 clean:
-	rm -f *.o *.swp *.so *.cil.c *.cil.i *.i *.ktt dsu.c $(GLIBC225INC)
+	rm -rf *.o *.swp *.so *.cil.c *.cil.i *.i *.ktt dsu.c $(GLIBC225INC)
