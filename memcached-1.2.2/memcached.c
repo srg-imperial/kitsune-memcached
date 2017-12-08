@@ -379,7 +379,9 @@ conn *conn_new(const int sfd, const int init_state, const int event_flags,
     c->base = base;
 
     /* EKIDEN */
+    STATS_LOCK();
     NOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
+    STATS_UNLOCK();
     
     event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
     event_base_set(base, &c->event);
@@ -448,7 +450,10 @@ static void conn_close(conn *c) {
     event_del(&c->event);
 
     /* EKIDEN */
+    STATS_LOCK();
+
     UNNOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
+    STATS_UNLOCK();
 
     if (settings.verbose > 1)
         fprintf(stderr, "<%d connection closed.\n", c->sfd);
