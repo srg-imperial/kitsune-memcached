@@ -22,6 +22,7 @@ std *
 #include <sys/signal.h>
 #include <sys/resource.h>
 #include <sys/uio.h>
+#include <sys/syscall.h>
 
 /* EKIDEN */
 #include <kitsune.h> /**DSU other 2 */
@@ -383,7 +384,9 @@ conn *conn_new(const int sfd, const int init_state, const int event_flags,
 
     /* EKIDEN */
     STATS_LOCK();
+    // int tid = syscall(SYS_gettid);
     NOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
+    // printf("%d %d -> %d : %d %d \n", tid, c, c->event, c->sfd, c->base);
     STATS_UNLOCK();
     
     event_set(c->event, sfd, event_flags, event_handler, (void *)c);
@@ -2800,11 +2803,6 @@ int main (int argc, char **argv) E_NOTELOCALS /**DSU data */
     }
     else /**DSU control 3 */
     { 
-        event_del(&clockevent); /**DSU other 2 */
-        event_del(&deleteevent);
-        
-        clock_handler(0, 0, 0); /**DSU other 2 */
-        delete_handler(0, 0, 0);
       
         kitsune_heaplist_iterator* tmp; /**DSU other 8 */
         conn* c;           
@@ -2813,12 +2811,18 @@ int main (int argc, char **argv) E_NOTELOCALS /**DSU data */
         // for (tmp = kitsune_track_conns ; tmp != NULL ; tmp = tmp->next)
         {
             // c = tmp->c;
-            printf("%d -> %d : %d \n", c, c->event, c->sfd);
+            // printf("%d -> %d : %d %d \n", c, c->event, c->sfd, c->base);
             event_del(c->event);
             event_set(c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
             event_base_set(c->base, c->event);
             event_add(c->event, NULL);
         }
+
+        event_del(&clockevent); /**DSU other 2 */
+        event_del(&deleteevent);
+        
+        clock_handler(0, 0, 0); /**DSU other 2 */
+        delete_handler(0, 0, 0);
 
 
 #ifdef USE_THREADS /**DSU other 3 */
@@ -2839,10 +2843,27 @@ again:
     event_base_loop(main_base, 0);
     /**DSU other 3 */
 #ifdef USE_THREADS
+    // if (update_requested) {
     notify_threads_update();
+    // }
 #endif
     kitsune_update("main"); /**DSU updatepoint */
     if (update_requested) {
+      
+        kitsune_heaplist_iterator* tmp; /**DSU other 8 */
+        conn* c;           
+        // struct conn_list * tmp;
+        HEAPLIST_FOR_EACH(&kitsune_track_conns, c, conn*, tmp)
+        // for (tmp = kitsune_track_conns ; tmp != NULL ; tmp = tmp->next)
+        {
+            // c = tmp->c;
+            // printf("%d -> %d : %d %d \n", c, c->event, c->sfd, c->base);
+            event_del(c->event);
+            event_set(c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+            event_base_set(c->base, c->event);
+            event_add(c->event, NULL);
+        }
+
       // Update was requested but we are the leader
       event_del(&clockevent);
       event_del(&deleteevent);
