@@ -328,14 +328,16 @@ conn *conn_new(const int sfd, const int init_state, const int event_flags,
         c->ilist = (item **)malloc(sizeof(item *) * c->isize);
         c->iov = (struct iovec *)malloc(sizeof(struct iovec) * c->iovsize);
         c->msglist = (struct msghdr *)malloc(sizeof(struct msghdr) * c->msgsize);
+        c->event = (struct event *)malloc(sizeof(struct event));
 
         if (c->rbuf == 0 || c->wbuf == 0 || c->ilist == 0 || c->iov == 0 ||
-                c->msglist == 0) {
+                c->msglist == 0 || c->event == 0) {
             if (c->rbuf != 0) free(c->rbuf);
             if (c->wbuf != 0) free(c->wbuf);
             if (c->ilist !=0) free(c->ilist);
             if (c->iov != 0) free(c->iov);
             if (c->msglist != 0) free(c->msglist);
+            if (c->event != 0) free(c->event);
             free(c);
             perror("malloc()");
             return NULL;
@@ -374,15 +376,19 @@ conn *conn_new(const int sfd, const int init_state, const int event_flags,
     c->item = 0;
     c->bucket = -1;
     c->gen = 0;
-    
-    /* EKIDEN */
-    NOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
 
-    event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
-    event_base_set(base, &c->event);
+    c->base = base;
+
+    /* EKIDEN */
+    STATS_LOCK();
+    NOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
+    STATS_UNLOCK();
+    
+    event_set(c->event, sfd, event_flags, event_handler, (void *)c);
+    event_base_set(base, c->event);
     c->ev_flags = event_flags;
 
-    if (event_add(&c->event, 0) == -1) {
+    if (event_add(c->event, 0) == -1) {
         if (conn_add_to_freelist(c)) {
             conn_free(c);
         }
@@ -434,6 +440,8 @@ void conn_free(conn *c) {
             free(c->ilist);
         if (c->iov)
             free(c->iov);
+        if (c->event)
+            free(c->event);
         free(c);
     }
 }
@@ -442,10 +450,13 @@ static void conn_close(conn *c) {
     assert(c != NULL);
 
     /* delete the event, the socket and the conn */
-    event_del(&c->event);
-    
+    event_del(c->event);
+
     /* EKIDEN */
+    STATS_LOCK();
+
     UNNOTE_HEAP(&kitsune_track_conns, c); /**DSU data */
+    STATS_UNLOCK();
 
     if (settings.verbose > 1)
         fprintf(stderr, "<%d connection closed.\n", c->sfd);
@@ -1761,14 +1772,15 @@ static int try_read_network(conn *c) {
 static bool update_event(conn *c, const int new_flags) {
     assert(c != NULL);
 
-    struct event_base *base = c->event.ev_base;
+    struct event_base *base = c->event->ev_base;
+    assert(c->event->ev_base == c->base);
     if (c->ev_flags == new_flags)
         return true;
-    if (event_del(&c->event) == -1) return false;
-    event_set(&c->event, c->sfd, new_flags, event_handler, (void *)c);
-    event_base_set(base, &c->event);
+    if (event_del(c->event) == -1) return false;
+    event_set(c->event, c->sfd, new_flags, event_handler, (void *)c);
+    event_base_set(base, c->event);
     c->ev_flags = new_flags;
-    if (event_add(&c->event, 0) == -1) return false;
+    if (event_add(c->event, 0) == -1) return false;
     return true;
 }
 
@@ -2477,7 +2489,9 @@ static void sig_handler(const int sig) {
 }
 
 static struct event updateevent; /**DSU other 4 */
+static int update_requested = 0;
 static void update_sig_handler(const int fd, const short which, void *arg) {
+    update_requested = 1;
     kitsune_signal_update();
     event_base_loopexit(main_base, NULL);
 }
@@ -2805,12 +2819,18 @@ int main (int argc, char **argv) E_NOTELOCALS /**DSU data */
            
         HEAPLIST_FOR_EACH(&kitsune_track_conns, c, conn*, tmp)
         {
-            printf("%d -> %d : %d \n", c, &c->event, c->sfd);
-            event_del(&c->event);
-            event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
-            event_base_set(c->event.ev_base, &c->event);
-            event_add(&c->event, NULL);
+            event_del(c->event);
+            event_set(c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+            event_base_set(c->base, c->event);
+            event_add(c->event, NULL);
         }
+
+        event_del(&clockevent); /**DSU other 2 */
+        event_del(&deleteevent);
+        
+        clock_handler(0, 0, 0); /**DSU other 2 */
+        delete_handler(0, 0, 0);
+
 
 #ifdef USE_THREADS /**DSU other 3 */
         /* Ekiden-specific call */
@@ -2826,12 +2846,39 @@ int main (int argc, char **argv) E_NOTELOCALS /**DSU data */
 
     kitsune_update("main"); /**DSU updatepoint */
     /* enter the event loop */
+again:
     event_base_loop(main_base, 0);
     /**DSU other 3 */
 #ifdef USE_THREADS
     notify_threads_update();
 #endif
     kitsune_update("main"); /**DSU updatepoint */
+    if (update_requested) {
+      
+        kitsune_heaplist_iterator* tmp; /**DSU other 8 */
+        conn* c;           
+        // struct conn_list * tmp;
+        HEAPLIST_FOR_EACH(&kitsune_track_conns, c, conn*, tmp)
+        // for (tmp = kitsune_track_conns ; tmp != NULL ; tmp = tmp->next)
+        {
+            // c = tmp->c;
+            // printf("%d -> %d : %d %d \n", c, c->event, c->sfd, c->base);
+            event_del(c->event);
+            event_set(c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+            event_base_set(c->base, c->event);
+            event_add(c->event, NULL);
+        }
+
+      // Update was requested but we are the leader
+      event_del(&clockevent);
+      event_del(&deleteevent);
+
+      clock_handler(0, 0, 0);
+      delete_handler(0, 0, 0);
+      update_requested = 0;
+
+      goto again;
+    }
     
     
     /* remove the PID file if we're a daemon */
