@@ -2851,6 +2851,11 @@ again:
       delete_handler(0, 0, 0);
       update_requested = 0;
 
+      event_set(&updateevent, SIGUSR2, EV_SIGNAL, update_sig_handler, NULL); /**DSU other 3 */
+      event_base_set(main_base, &updateevent);
+      event_add(&updateevent, NULL);
+
+
       goto again;
     }
     
